@@ -36,8 +36,14 @@ class DocumentationSource {
     });
   }
 
-  sortSection(nodes) {
-    nodes.sort((a, b) => (a.weight > b.weight ? 1 : -1));
+  sortSection(nodes, method) {
+    if (method === "weighted") {
+      nodes.sort((a, b) => (a.weight > b.weight ? 1 : -1));
+    }
+
+    if (method === "alphabetical") {
+      nodes.sort((a, b) => a.title.localeCompare(b.title));
+    }
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
@@ -59,15 +65,19 @@ class DocumentationSource {
 
     Object.keys(this.options.sidebarOrder).forEach((id) => {
       const order = this.options.sidebarOrder[id];
-      order.forEach((title) => {
+      order.forEach((o) => {
         const query = {
-          section: { $eq: title },
+          section: { $eq: o.title },
           version: { $eq: id },
         };
 
         let nodes = this.collection.findNodes(query);
 
-        this.sortSection(nodes);
+        if (o.method === "undefined") {
+          o.method = "weighted";
+        }
+
+        this.sortSection(nodes, o.method);
 
         nodes.forEach((node) => {
           this.createSidebarSection(sidebar, node);
